@@ -1,24 +1,24 @@
 
-var Gun = require('./root');
-Gun.chain.get = function(key, cb, as){
-	var gun, tmp;
+var Database = require('./root');
+Database.chain.get = function(key, cb, as){
+	var database, tmp;
 	if(typeof key === 'string'){
 		if(key.length == 0) {	
-			(gun = this.chain())._.err = {err: Gun.log('0 length key!', key)};
-			if(cb){ cb.call(gun, gun._.err) }
-			return gun;
+			(database = this.chain())._.err = {err: Database.log('0 length key', key)};
+			if(cb){ cb.call(database, database._.err) }
+			return database;
 		}
 		var back = this, cat = back._;
 		var next = cat.next || empty;
-		if(!(gun = next[key])){
-			gun = key && cache(key, back);
+		if(!(database = next[key])){
+			database = key && cache(key, back);
 		}
-		gun = gun && gun.$;
+		database = database && database.$;
 	} else
 	if('function' == typeof key){
 		if(true === cb){ return soul(this, key, cb, as), this }
-		gun = this;
-		var cat = gun._, opt = cb || {}, root = cat.root, id;
+		database = this;
+		var cat = database._, opt = cb || {}, root = cat.root, id;
 		opt.at = cat;
 		opt.ok = key;
 		var wait = {}; // can we assign this to the at instead, like in once?
@@ -30,7 +30,7 @@ Gun.chain.get = function(key, cb, as){
 			if(odd || u === data){ // handles non-core
 				data = (u === ((tmp = msg.put)||'')['='])? (u === (tmp||'')[':'])? tmp : tmp[':'] : tmp['='];
 			}
-			if(link = ('string' == typeof (tmp = Gun.valid(data)))){
+			if(link = ('string' == typeof (tmp = Database.valid(data)))){
 				data = (u === (tmp = root.$.get(tmp)._.put))? opt.not? u : data : tmp;
 			}
 			if(opt.not && u === data){ return }
@@ -83,7 +83,7 @@ Gun.chain.get = function(key, cb, as){
 		opt.out = opt.out || {get: {}};
 		cat.on('out', opt.out);
 		root.pass = tmp;
-		return gun;
+		return database;
 	} else
 	if('number' == typeof key){
 		return this.get(''+key, cb, as);
@@ -92,20 +92,20 @@ Gun.chain.get = function(key, cb, as){
 		return this.get(tmp, cb, as);
 	} else
 	if(tmp = this.get.next){
-		gun = tmp(this, key);
+		database = tmp(this, key);
 	}
-	if(!gun){
-		(gun = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
-		if(cb){ cb.call(gun, gun._.err) }
-		return gun;
+	if(!database){
+		(database = this.chain())._.err = {err: Database.log('Invalid get request', key)}; // CLEAN UP
+		if(cb){ cb.call(database, database._.err) }
+		return database;
 	}
 	if(cb && 'function' == typeof cb){
-		gun.get(cb, as);
+		database.get(cb, as);
 	}
-	return gun;
+	return database;
 }
 function cache(key, back){
-	var cat = back._, next = cat.next, gun = back.chain(), at = gun._;
+	var cat = back._, next = cat.next, database = back.chain(), at = database._;
 	if(!next){ next = cat.next = {} }
 	next[at.get = key] = at;
 	if(back === cat.root.$){
@@ -119,12 +119,12 @@ function cache(key, back){
 	}
 	return at;
 }
-function soul(gun, cb, opt, as){
-	var cat = gun._, acks = 0, tmp;
+function soul(database, cb, opt, as){
+	var cat = database._, acks = 0, tmp;
 	if(tmp = cat.soul || cat.link){ return cb(tmp, as, cat) }
 	if(cat.jam){ return cat.jam.push([cb, as]) }
 	cat.jam = [[cb,as]];
-	gun.get(function go(msg, eve){
+	database.get(function go(msg, eve){
 		if(u === msg.put && !cat.root.opt.super && (tmp = Object.keys(cat.root.opt.peers).length) && ++acks <= tmp){ // TODO: super should not be in core code, bring AXE up into core instead to fix? // TODO: .keys( is slow
 			return;
 		}
@@ -132,12 +132,12 @@ function soul(gun, cb, opt, as){
 		var at = ((at = msg.$) && at._) || {}, i = 0, as;
 		tmp = cat.jam; delete cat.jam; // tmp = cat.jam.splice(0, 100);
 		//if(tmp.length){ process.nextTick(function(){ go(msg, eve) }) }
-		while(as = tmp[i++]){ //Gun.obj.map(tmp, function(as, cb){
+		while(as = tmp[i++]){
 			var cb = as[0], id; as = as[1];
-			cb && cb(id = at.link || at.soul || Gun.valid(msg.put) || ((msg.put||{})._||{})['#'], as, msg, eve);
+			cb && cb(id = at.link || at.soul || Database.valid(msg.put) || ((msg.put||{})._||{})['#'], as, msg, eve);
 		} //);
 	}, {out: {get: {'.':true}}});
-	return gun;
+	return database;
 }
 function rid(at){
 	var cat = this.at || this.on;
@@ -152,5 +152,5 @@ function rid(at){
 	//obj.del(map, at); // TODO: Warning: This unsubscribes ALL of this chain's listeners from this link, not just the one callback event.
 	return;
 }
-var empty = {}, valid = Gun.valid, u;
+var empty = {}, valid = Database.valid, u;
 	

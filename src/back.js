@@ -1,6 +1,6 @@
 
-var Gun = require('./root');
-Gun.chain.back = function(n, opt){ var tmp;
+var Database = require('./root');
+Database.chain.back = function(n, opt){ var tmp;
 	n = n || 1;
 	if(-1 === n || Infinity === n){
 		return this._.root.$;
@@ -8,7 +8,7 @@ Gun.chain.back = function(n, opt){ var tmp;
 	if(1 === n){
 		return (this._.back || this._).$;
 	}
-	var gun = this, at = gun._;
+	var database = this, at = database._;
 	if(typeof n === 'string'){
 		n = n.split('.');
 	}
@@ -18,7 +18,7 @@ Gun.chain.back = function(n, opt){ var tmp;
 			tmp = (tmp||empty)[n[i]];
 		}
 		if(u !== tmp){
-			return opt? gun : tmp;
+			return opt? database : tmp;
 		} else
 		if((tmp = at.back)){
 			return tmp.$.back(n, opt);

@@ -1,16 +1,13 @@
 
-// WARNING: GUN is very simple, but the JavaScript chaining API around GUN
-// is complicated and was extremely hard to build. If you port GUN to another
-// language, consider implementing an easier API to build.
-var Gun = require('./root');
-Gun.chain.chain = function(sub){
-	var gun = this, at = gun._, chain = new (sub || gun).constructor(gun), cat = chain._, root;
+var Database = require('./root');
+Database.chain.chain = function(sub){
+	var database = this, at = database._, chain = new (sub || database).constructor(database), cat = chain._, root;
 	cat.root = root = at.root;
 	cat.id = ++root.once;
-	cat.back = gun._;
-	cat.on = Gun.on;
-	cat.on('in', Gun.on.in, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
-	cat.on('out', Gun.on.out, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
+	cat.back = database._;
+	cat.on = Database.on;
+	cat.on('in', Database.on.in, cat); // For 'in' if I add my own listeners to each then I MUST do it before in gets called. If I listen globally for all incoming data instead though, regardless of individual listeners, I can transform the data there and then as well.
+	cat.on('out', Database.on.out, cat); // However for output, there isn't really the global option. I must listen by adding my own listener individually BEFORE this one is ever called.
 	return chain;
 }
 
@@ -45,33 +42,6 @@ function output(msg){
 				back.on('in', {get: get, put: {'#': back.soul, '.': get, ':': back.put[get], '>': state_is(root.graph[back.soul], get)}});
 				if(tmp){ return }
 			}
-				/*put = (back.$.get(get)._);
-				if(!(tmp = put.ack)){ put.ack = -1 }
-				back.on('in', {
-					$: back.$,
-					put: Gun.state.ify({}, get, Gun.state(back.put, get), back.put[get]),
-					get: back.get
-				});
-				if(tmp){ return }
-			} else
-			if('string' != typeof get){
-				var put = {}, meta = (back.put||{})._;
-				Gun.obj.map(back.put, function(v,k){
-					if(!Gun.text.match(k, get)){ return }
-					put[k] = v;
-				})
-				if(!Gun.obj.empty(put)){
-					put._ = meta;
-					back.on('in', {$: back.$, put: put, get: back.get})
-				}
-				if(tmp = at.lex){
-					tmp = (tmp._) || (tmp._ = function(){});
-					if(back.ack < tmp.ask){ tmp.ask = back.ack }
-					if(tmp.ask){ return }
-					tmp.ask = 1;
-				}
-			}
-			*/
 			root.ask(ack, msg); // A3120 ?
 			return root.on('in', msg);
 		}
@@ -93,17 +63,17 @@ function output(msg){
 		}
 	}
 	return back.on('out', msg);
-}; Gun.on.out = output;
+}; Database.on.out = output;
 
 function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to optimize functions with different parameter calls, so try to do benchmark to see if there is any actual difference.
-	var root = cat.root, gun = msg.$ || (msg.$ = cat.$), at = (gun||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
+	var root = cat.root, database = msg.$ || (msg.$ = cat.$), at = (database||'')._ || empty, tmp = msg.put||'', soul = tmp['#'], key = tmp['.'], change = (u !== tmp['='])? tmp['='] : tmp[':'], state = tmp['>'] || -Infinity, sat; // eve = event, at = data at, cat = chain at, sat = sub at (children chains).
 	if(u !== msg.put && (u === tmp['#'] || u === tmp['.'] || (u === tmp[':'] && u === tmp['=']) || u === tmp['>'])){ // convert from old format
 		if(!valid(tmp)){
 			if(!(soul = ((tmp||'')._||'')['#'])){ console.log("chain not yet supported for", tmp, '...', msg, cat); return; }
-			gun = cat.root.$.get(soul);
+			database = cat.root.$.get(soul);
 			return setTimeout.each(Object.keys(tmp).sort(), function(k){ // TODO: .keys( is slow // BUG? ?Some re-in logic may depend on this being sync?
 				if('_' == k || u === (state = state_is(tmp, k))){ return }
-				cat.on('in', {$: gun, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
+				cat.on('in', {$: database, put: {'#': soul, '.': k, '=': tmp[k], '>': state}, VIA: msg});
 			});
 		}
 		cat.on('in', {$: at.back.$, put: {'#': soul = at.back.soul, '.': key = at.has || at.get, '=': tmp, '>': state_is(at.back.put, key)}, via: msg}); // TODO: This could be buggy! It assumes/approxes data, other stuff could have corrupted it.
@@ -150,15 +120,15 @@ function input(msg, cat){ cat = cat || this.as; // TODO: V8 may not be able to o
 	}
 
 	link(msg, cat);
-}; Gun.on.in = input;
+}; Database.on.in = input;
 
 function link(msg, cat){ cat = cat || this.as || msg.$._;
-	if(msg.$$ && this !== Gun.on){ return } // $$ means we came from a link, so we are at the wrong level, thus ignore it unless overruled manually by being called directly.
+	if(msg.$$ && this !== Database.on){ return } // $$ means we came from a link, so we are at the wrong level, thus ignore it unless overruled manually by being called directly.
 	if(!msg.put || cat.soul){ return } // But you cannot overrule being linked to nothing, or trying to link a soul chain - that must never happen.
 	var put = msg.put||'', link = put['=']||put[':'], tmp;
 	var root = cat.root, tat = root.$.get(put['#']).get(put['.'])._;
 	if('string' != typeof (link = valid(link))){
-		if(this === Gun.on){ (tat.echo || (tat.echo = {}))[cat.id] = cat } // allow some chain to explicitly force linking to simple data.
+		if(this === Database.on){ (tat.echo || (tat.echo = {}))[cat.id] = cat } // allow some chain to explicitly force linking to simple data.
 		return; // by default do not link to data that is not a link.
 	}
 	if((tat.echo || (tat.echo = {}))[cat.id] // we've already linked ourselves so we do not need to do it again. Except... (annoying implementation details)
@@ -178,7 +148,7 @@ function link(msg, cat){ cat = cat || this.as || msg.$._;
 		if(!get || !(sat = tmp[get])){ return }
 		sat.on('out', {get: {'#': link, '.': get}}); // go get it.
 	},0,99);
-}; Gun.on.link = link;
+}; Database.on.link = link;
 
 function unlink(msg, cat){ // ugh, so much code for seemingly edge case behavior.
 	var put = msg.put||'', change = (u !== put['='])? put['='] : put[':'], root = cat.root, link, tmp;
@@ -219,7 +189,7 @@ function unlink(msg, cat){ // ugh, so much code for seemingly edge case behavior
 	}
 	delete (tmp.echo||'')[cat.id];
 	unlink({get: cat.get, put: u, $: msg.$, linked: msg.linked = msg.linked || tmp.link}, cat); // unlink our sub chains.
-}; Gun.on.unlink = unlink;
+}; Database.on.unlink = unlink;
 
 function ack(msg, ev){
 	//if(!msg['%'] && (this||'').off){ this.off() } // do NOT memory leak, turn off listeners! Now handled by .ask itself
@@ -242,9 +212,9 @@ function ack(msg, ev){
 		return;
 	}
 	(msg._||{}).miss = 1;
-	Gun.on.put(msg);
+	Database.on.put(msg);
 	return; // eom
 }
 
-var empty = {}, u, text_rand = String.random, valid = Gun.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Gun.state, state_is = state.is, state_ify = state.ify;
+var empty = {}, u, text_rand = String.random, valid = Database.valid, obj_has = function(o, k){ return o && Object.prototype.hasOwnProperty.call(o, k) }, state = Database.state, state_is = state.is, state_ify = state.ify;
 	

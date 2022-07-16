@@ -1,7 +1,7 @@
 ;(function(){
-	function as(el, gun, cb, opt){
+	function as(el, database, cb, opt){
 		el = $(el);
-		if(gun === as.gui && as.el && as.el.is(el)){ return }
+		if(database === as.gui && as.el && as.el.is(el)){ return }
 
 		opt = opt || {};
 		opt.match = opt.match || '{{ ';
@@ -45,7 +45,7 @@
 					data.push(val);
 					if(!attr){ tag.text(val) }
 
-					var ref = gun, sup = [], tmp;
+					var ref = database, sup = [], tmp;
 					if(tmp = tag.attr('name')){ sup.push(tmp) }
 					tag.parents("[name]").each(function(){
 						sup.push($(this).attr('name'));
@@ -68,7 +68,7 @@
 
 		}());
 
-		as.gui = gun;
+		as.gui = database;
 		as.el = el;
 		if(el.data('as')){
 			el.html(el.data('as').fresh);
@@ -82,7 +82,7 @@
 			var name = $(this),
 				parents = name.parents("[name]"),
 				path = [],
-				ref = gun;
+				ref = database;
 
 			path.push(name.attr('name'));
 			parents.each(function(){
@@ -106,7 +106,7 @@
 			} 
 
 			ref.get(function(at){
-				var data = at.put, key = at.get, gui = at.gun || at.$, ui = name, back;
+				var data = at.put, key = at.get, gui = at.database || at.$, ui = name, back;
 				if(model){
 					ui = model.has[(gui._).id];
 					if(!ui){
@@ -120,7 +120,7 @@
 						model.has[(gui._).id] = ui;
 					}
 				}
-				ui.data('gun', gui);
+				ui.data('database', gui);
 				if(ui.data('was') === data){ return }
 				if(many && ui.is('.sort')){
 					var up = ui.closest("[name='#']");
@@ -157,7 +157,6 @@
 		as.lock = g;
 		g.put(data);
 	}, 99));
-	//$(document).on('submit', 'form', function(e){ e.preventDefault() });
 	var u;
 	window.as = as;
 	$.as = as;
@@ -209,31 +208,27 @@
 ;$(function(){
 	$('.page').not(':first').hide();
 	$.as.route(location.hash.slice(1));
-	$(JOY.start = JOY.start || function(){ $.as(document, gun, null, JOY.opt) });
-
-	if($('body').attr('peers')){ (console.warn || console.log)('Warning: Please upgrade <body peers=""> to https://github.com/eraeco/joydb#peers !') }
-
+	$(JOY.start = JOY.start || function(){ $.as(document, database, null, JOY.opt) });
 });
-;(function(){ // need to isolate into separate module!
+;(function(){
 	var joy = window.JOY = function(){};
 	joy.auth = function(a,b,cb,o){
 		if(!o){ o = cb ; cb = 0 }
 		if(o === true){
-			gun.user().create(a, b);
+			database.user().create(a, b);
 			return;
 		}
-		gun.user().auth(a,b, cb,o);
+		database.user().auth(a,b, cb,o);
 	}
 
 	var opt = joy.opt = window.CONFIG || {}, peers;
 	$('link[type=peer]').each(function(){ (peers || (peers = [])).push($(this).attr('href')) });
-	!window.gun && (opt.peers = opt.peers || peers || (function(){
-		(console.warn || console.log)('Warning: No peer provided, defaulting to DEMO peer. Do not run in production, or your data will be regularly wiped, reset, or deleted. For more info, check https://github.com/eraeco/joydb#peers !');
-		return ['https://gunjs.herokuapp.com/gun'];
+	!window.database && (opt.peers = opt.peers || peers || (function(){
+		return ['https://gun-rs.iris.to/gun'];
 	}()));
-	window.gun = window.gun || Gun(opt);
+	window.database = window.database || Database(opt);
 
-	gun.on('auth', function(ack){
+	database.on('auth', function(ack){
 		console.log("Your namespace is publicly available at", ack.soul);
 	});
 }());

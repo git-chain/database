@@ -1,18 +1,18 @@
 
-var Gun = require('./root');
-Gun.chain.put = function(data, cb, as){ // I rewrote it :)
-	var gun = this, at = gun._, root = at.root;
+var Database = require('./root');
+Database.chain.put = function(data, cb, as){ // I rewrote it :)
+	var database = this, at = database._, root = at.root;
 	as = as || {};
 	as.root = at.root;
 	as.run || (as.run = root.once);
 	stun(as, at.id); // set a flag for reads to check if this chain is writing.
 	as.ack = as.ack || cb;
-	as.via = as.via || gun;
+	as.via = as.via || database;
 	as.data = as.data || data;
 	as.soul || (as.soul = at.soul || ('string' == typeof cb && cb));
-	var s = as.state = as.state || Gun.state();
-	if('function' == typeof data){ data(function(d){ as.data = d; gun.put(u,u,as) }); return gun }
-	if(!as.soul){ return get(as), gun }
+	var s = as.state = as.state || Database.state();
+	if('function' == typeof data){ data(function(d){ as.data = d; database.put(u,u,as) }); return database }
+	if(!as.soul){ return get(as), database }
 	as.$ = root.$.get(as.soul); // TODO: This may not allow user chaining and similar?
 	as.todo = [{it: as.data, ref: as.$}];
 	as.turn = as.turn || turn;
@@ -27,7 +27,7 @@ Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 			if(tmp.length){ to.push(at) }
 		}
 		k && (to.path || (to.path = [])).push(k);
-		if(!(v = valid(d)) && !(g = Gun.is(d))){
+		if(!(v = valid(d)) && !(g = Database.is(d))){
 			if(!Object.plain(d)){ ran.err(as, "Invalid data: "+ check(d) +" at " + (as.via.back(function(at){at.get && tmp.push(at.get)}, tmp = []) || tmp.join('.'))+'.'+(to.path||[]).join('.')); return }
 			var seen = as.seen || (as.seen = []), i = seen.length;
 			while(i--){ if(d === (tmp = seen[i]).it){ v = d = tmp.link; break } }
@@ -73,12 +73,12 @@ Gun.chain.put = function(data, cb, as){ // I rewrote it :)
 		if(!to.length){ return as.ran(as) }
 		as.turn(walk);
 	}());
-	return gun;
+	return database;
 }
 
 function stun(as, id){
 	if(!id){ return } id = (id._||'').id||id;
-	var run = as.root.stun || (as.root.stun = {on: Gun.on}), test = {}, tmp;
+	var run = as.root.stun || (as.root.stun = {on: Database.on}), test = {}, tmp;
 	as.stun || (as.stun = run.on('stun', function(){ }));
 	if(tmp = run.on(''+id)){ tmp.the.last.next(test) }
 	if(test.run >= as.run){ return }
@@ -101,9 +101,10 @@ function stun(as, id){
 function ran(as){
 	if(as.err){ ran.end(as.stun, as.root); return } // move log handle here.
 	if(as.todo.length || as.end || !Object.empty(as.wait)){ return } as.end = 1;
+	//(as.retry = function(){ as.acks = 0;
 	var cat = (as.$.back(-1)._), root = cat.root, ask = cat.ask(function(ack){
 		root.on('ack', ack);
-		if(ack.err){ Gun.log(ack) }
+		if(ack.err && !ack.lack){ Database.log(ack) }
 		if(++acks > (as.acks || 0)){ this.off() } // Adjustable ACKs! Only 1 by default.
 		if(!as.ack){ return }
 		as.ack(ack, this);
@@ -114,13 +115,15 @@ function ran(as){
 		setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 	}).hatch = tmp; // this is not official yet ^
 	//console.log(1, "PUT", as.run, as.graph);
-	(as.via._).on('out', {put: as.out = as.graph, ok: as.ok || as.opt, opt: as.opt, '#': ask, _: tmp});
+	if(as.ack && !as.ok){ as.ok = as.acks || 9 } // TODO: In future! Remove this! This is just old API support.
+	(as.via._).on('out', {put: as.out = as.graph, ok: as.ok && {'@': as.ok+1}, opt: as.opt, '#': ask, _: tmp});
+	//})();
 }; ran.end = function(stun,root){
 	stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 	if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }
 	stun.off();
 }; ran.err = function(as, err){
-	(as.ack||noop).call(as, as.out = { err: as.err = Gun.log(err) });
+	(as.ack||noop).call(as, as.out = { err: as.err = Database.log(err) });
 	as.ran(as);
 }
 
@@ -147,6 +150,6 @@ function get(as){
 }
 function check(d, tmp){ return ((d && (tmp = d.constructor) && tmp.name) || typeof d) }
 
-var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Gun.valid, state_ify = Gun.state.ify;
+var u, empty = {}, noop = function(){}, turn = setTimeout.turn, valid = Database.valid, state_ify = Database.state.ify;
 var iife = function(fn,as){fn.call(as||empty)}
 	

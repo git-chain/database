@@ -1,22 +1,22 @@
 
-var Gun = require('./index');
-Gun.Mesh = require('./mesh');
+var Database = require('./index');
+Database.Mesh = require('./mesh');
 
 // TODO: resync upon reconnect online/offline
 //window.ononline = window.onoffline = function(){ console.log('online?', navigator.onLine) }
 
-Gun.on('opt', function(root){
+Database.on('opt', function(root){
 	this.to.next(root);
 	if(root.once){ return }
 	var opt = root.opt;
 	if(false === opt.WebSocket){ return }
 
-	var env = Gun.window || {};
+	var env = Database.window || {};
 	var websocket = opt.WebSocket || env.WebSocket || env.webkitWebSocket || env.mozWebSocket;
 	if(!websocket){ return }
 	opt.WebSocket = websocket;
 
-	var mesh = opt.mesh = opt.mesh || Gun.Mesh(root);
+	var mesh = opt.mesh = opt.mesh || Database.Mesh(root);
 
 	var wire = mesh.wire || opt.wire;
 	mesh.wire = opt.wire = open;
