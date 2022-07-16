@@ -114,7 +114,7 @@ function ran(as){
 		setTimeout.each(Object.keys(stun = stun.add||''), function(cb){ if(cb = stun[cb]){cb()} }); // resume the stunned reads // Any perf reasons to CPU schedule this .keys( ?
 	}).hatch = tmp; // this is not official yet ^
 	//console.log(1, "PUT", as.run, as.graph);
-	(as.via._).on('out', {put: as.out = as.graph, opt: as.opt, '#': ask, _: tmp});
+	(as.via._).on('out', {put: as.out = as.graph, ok: as.ok || as.opt, opt: as.opt, '#': ask, _: tmp});
 }; ran.end = function(stun,root){
 	stun.end = noop; // like with the earlier id, cheaper to make this flag a function so below callbacks do not have to do an extra type check.
 	if(stun.the.to === stun && stun === stun.the.last){ delete root.stun }

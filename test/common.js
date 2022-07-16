@@ -14,7 +14,7 @@ describe('Gun', function(){
 			root.Gun = root.Gun;
 			root.Gun.TESTING = true;
 		} else {
-			require('../lib/ison');
+			require('../lib/yson');
 			root.Gun = require('../gun');
 			root.Gun.TESTING = true;
 	    require('../lib/store');
@@ -78,15 +78,38 @@ describe('Gun', function(){
 				//var json = require('fs').readFileSync('./stats.json').toString();
 				//var json = require('fs').readFileSync('./video.json').toString();
 			});
+			it('backslash', function(done){
+				var o = {z:"test\"wow\\"};
+				JSON.stringifyAsync(o, function(err,t){
+					JSON.parseAsync(t, function(err,data){
+						expect(data).to.be.eql(o);
+						next();
+					})
+				});
+				function next(){
+					JSON.parseAsync('{"webRTCsdp":"v=0\r\no=-"}', function(err,data){
+						var o = {webRTCsdp: 'v=0\r\no=-'};
+						expect(data).to.be.eql(o);
+						JSON.stringifyAsync(o, function(err,t){
+							expect(JSON.parse(t)).to.be.eql(o);
+							expect(t).to.be(JSON.stringify(o));
+							expect(t).to.be('{"webRTCsdp":"v=0\\r\\no=-"}');
+							JSON.parseAsync(t, function(err,d){
+								expect(d).to.be.eql(o);
+								done();
+							})
+						});
+					})
+				}
+			});
 			it('stringify', function(done){
 				function Foo(){}; Foo.prototype.toJSON = function(){};
 				//var obj = {"what\"lol": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
 				var obj = {"what": {"a": 1, "b": true, "c": false, "d": null, "wow": [{"z": 9}, true, "hi", 3.3]}};
-				var obj = [{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}];
+				var obj = [{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,b: new Foo,c:3,y:"yes","get":{"#":"chat"},wow:undefined,foo:[1,function(){}, function(){}, 'go'],blah:{a:5,toJSON:function(){ return 9 }}}, {webRTCsdp: "v=0\r\no=-"}, [[]], 10e9];
 				JSON.stringifyAsync(obj, function(err, text){
 					JSON.parseAsync(text, function(err, data){
-						expect(data).to.be.eql([{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}]);
-
+						expect(data).to.be.eql([{x:"test 😎\\😄🔥",z:"test\\","what\"lol": {"0": 1.01},a:true,c:3,y:"yes","get":{"#":"chat"},foo:[1,null,null,'go'],blah:9}, {webRTCsdp: "v=0\r\no=-"}, [[]], 10e9]);
 						var obj = {a: [], b: [""], c: ["", 1], d: [1, ""], e: {"":[]}, "a\"b": {0: 1}, wow: {'': {cool: 1}}};obj.lol = {0: {sweet: 9}};obj.wat = {"": 'cool'};obj.oh = {phew: {}, "": {}};
 						JSON.stringifyAsync(obj, function(err, text2){
 							JSON.parseAsync(text2, function(err, data){
@@ -4021,6 +4044,78 @@ describe('Gun', function(){
 				nopasstun(0, gunA);
 				nopasstun(0, gunB);
 				nopasstun(done, gunC);
+			}, 100);
+		});		
+
+		it('ack aggregation bypass', function(done){
+			console.log("WORKS IN BROWSER, NOT SURE WHY NODEJS CONFUSED, CHECK LATER");
+			done();return;
+			var alice = Gun({localStorage: false, file: false, rad: false, radisk: false});
+			var bob = Gun({localStorage: false, file: false, rad: false, radisk: false});
+			var carl = Gun({localStorage: false, file: false, rad: false, radisk: false});
+
+			var adam = alice.back('opt.mesh');
+			var asay = adam.say;
+
+			var bdam = bob.back('opt.mesh');
+			var bsay = bdam.say;
+
+			var cdam = carl.back('opt.mesh');
+			var csay = cdam.say;
+
+			//console.only.i = 1;
+			adam.say = function(raw, peer){
+				console.only(2, 'adam says:', raw);
+				console.only(1, '...');
+				bdam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				asay(raw, peer);
+			}
+			bdam.say = function(raw, peer){
+				console.only(7, "bob the relay is like YO", raw);
+				adam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				cdam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				bsay(raw, peer);
+			}
+			cdam.say = function(raw, peer){
+				console.only(4, "carl speaks out:", raw);
+				console.only(3, "...");
+				bdam.hear((raw.length && raw) || JSON.stringify(raw), {});
+				csay(raw, peer);
+			}
+
+			carl.on('put', async function(msg){
+				this.to.next(msg);
+
+				var tmp = msg.put;
+				
+				//if(Math.random() > 0.5){ return; }
+				//console.log(msg.put);
+
+				//localStorage[tmp['#']+tmp['.']] = tmp[':'];
+
+				setTimeout(function(){
+					carl.on('out', {'@': msg['#']+'', ok: {BANANA: 9}});
+				}, 10);
+			});
+
+			alice.on('get', function(msg){ setTimeout(function(){ Gun.on.get.ack(msg); },9) })
+
+
+			setTimeout(async function(){
+				var pair = await SEA.pair();
+				var user = alice.user();
+				setTimeout(function(){
+					var c = 0;
+					//alice.on('auth', function(){
+					alice.get('test').put({a: 1, b: 2, c: 3}, function(ack){
+						//console.log("my data got saved?", ack);
+						
+						if(ack.ok.BANANA && ++c === c){
+							done();
+						}
+					}, {acks: 99});
+					//}); user.auth(pair);
+				},10);
 			}, 100);
 		});
 
