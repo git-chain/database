@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/git-chain/database.git"
   },
-  "keywords": [],
+  "keywords": ["database", "p2p", "decentralized", "distributed", "realtime"],
   "author": "",
   "license": "MIT",
   "engines": {
