@@ -15,14 +15,14 @@
       if(false !== opt.check){
         var err;
         if(!alias){ err = "No user." }
-        if((pass||'').length < 8){ err = "Password too short!" }
+        if((pass||'').length < 8){ err = "Password too short" }
         if(err){
           cb({err: Gun.log(err)});
           return gun;
         }
       }
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.log("User is already being created or authenticated"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -31,7 +31,7 @@
         act.pubs = pubs;
         if(pubs && !opt.already){
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
-          var ack = {err: Gun.log('User already created!')};
+          var ack = {err: Gun.log('User already created')};
           cat.ing = false;
           (cb || noop)(ack);
           gun.leave();
@@ -94,7 +94,7 @@
       }
       if(SEA.window){
         try{var sS = {};
-        sS = window.sessionStorage;
+        sS = SEA.window.sessionStorage;
         delete sS.recall;
         delete sS.pair;
         }catch(e){};

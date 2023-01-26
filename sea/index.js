@@ -1,6 +1,6 @@
 
     var SEA = require('./sea'), S = require('./settings'), noop = function() {}, u;
-    var Gun = (''+u != typeof window)? (window.Gun||{on:noop}) : require((''+u === typeof MODULE?'.':'')+'./gun', 1);
+    var Gun = (SEA.window||'').GUN || require((''+u === typeof MODULE?'.':'')+'./gun', 1);
     // After we have a GUN extension to make user registration/login easy, we then need to handle everything else.
 
     // We do this with a GUN adapter, we first listen to when a gun instance is created (and when its options change)
@@ -66,7 +66,7 @@
       check.any(eve, msg, val, key, soul, at, no, at.user||''); return;
       eve.to.next(msg); // not handled
     }
-    check.hash = function(eve, msg, val, key, soul, at, no){
+    check.hash = function(eve, msg, val, key, soul, at, no){ // mark unbuilt @i001962 's epic hex contrib!
       SEA.work(val, null, function(data){
         function hexToBase64(hexStr) {
           let base64 = "";
@@ -76,16 +76,16 @@
         if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
           else if (data && data === hexToBase64(key.split('#').slice(-1)[0])){ 
           return eve.to.next(msg) }
-        no("Data hash not same as hash!");
+        no("Data hash not same as hash");
       }, {name: 'SHA-256'});
     }
     check.alias = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@, ~@alice: {#~@alice}}
-      if(!val){ return no("Data must exist!") } // data MUST exist
+      if(!val){ return no("Data must exist") } // data MUST exist
       if('~@'+key === link_is(val)){ return eve.to.next(msg) } // in fact, it must be EXACTLY equal to itself
       no("Alias not same!"); // if it isn't, reject.
     };
     check.pubs = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@alice, ~asdf: {#~asdf}}
-      if(!val){ return no("Alias must exist!") } // data MUST exist
+      if(!val){ return no("Alias must exist") } // data MUST exist
       if(key === link_is(val)){ return eve.to.next(msg) } // and the ID must be EXACTLY equal to its property
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };

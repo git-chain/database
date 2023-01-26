@@ -193,7 +193,7 @@ Gun.ask = require('./ask');
 	var ERR = "Error: Invalid graph!";
 	var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 	var L = JSON.stringify, MD = 2147483647, State = Gun.state;
-	var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
+	var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: currently syncing more than 1K records");CF=function(){C=0}}};
 
 }());
 
@@ -201,6 +201,9 @@ Gun.ask = require('./ask');
 	Gun.on.get = function(msg, gun){
 		var root = gun._, get = msg.get, soul = get['#'], node = root.graph[soul], has = get['.'];
 		var next = root.next || (root.next = {}), at = next[soul];
+
+		// TODO: Azarattum bug, what is in graph is not same as what is in next. Fix!
+
 		// queue concurrent GETs?
 		// TODO: consider tagging original message into dup for DAM.
 		// TODO: ^ above? In chat app, 12 messages resulted in same peer asking for `#user.pub` 12 times. (same with #user GET too, yipes!) // DAM note: This also resulted in 12 replies from 1 peer which all had same ##hash but none of them deduped because each get was different.
@@ -221,10 +224,14 @@ Gun.ask = require('./ask');
 		}*/
 		var ctx = msg._||{}, DBG = ctx.DBG = msg.DBG;
 		DBG && (DBG.g = +new Date);
-		//console.log("GET:", get, node, has);
+		//console.log("GET:", get, node, has, at);
+		//if(!node && !at){ return root.on('get', msg) }
+		//if(has && node){ // replace 2 below lines to continue dev?
 		if(!node){ return root.on('get', msg) }
 		if(has){
-			if('string' != typeof has || u === node[has]){ return root.on('get', msg) }
+			if('string' != typeof has || u === node[has]){
+				if(!((at||'').next||'')[has]){ root.on('get', msg); return }
+			}
 			node = state_ify({}, has, state_is(node, has), node[has], soul);
 			// If we have a key in-memory, do we really need to fetch?
 			// Maybe... in case the in-memory key we have is a local write
@@ -251,7 +258,7 @@ Gun.ask = require('./ask');
 			tmp = keys.length;
 			console.STAT && console.STAT(S, -(S - (S = +new Date)), 'got copied some');
 			DBG && (DBG.ga = +new Date);
-			root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG});
+			root.on('in', {'@': to, '#': id, put: put, '%': (tmp? (id = text_rand(9)) : u), $: root.$, _: faith, DBG: DBG, FOO: 1});
 			console.STAT && console.STAT(S, +new Date - S, 'got in');
 			if(!tmp){ return }
 			setTimeout.turn(go);
@@ -298,7 +305,4 @@ module.exports = Gun;
 
 (Gun.window||{}).console = (Gun.window||{}).console || {log: function(){}};
 (C = console).only = function(i, s){ return (C.only.i && i === C.only.i && C.only.i++) && (C.log.apply(C, arguments) || s) };
-
-;"Please do not remove welcome log unless you are paying for a monthly sponsorship, thanks!";
-Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, please ask for help on http://chat.gun.eco if anything takes you longer than 5min to figure out!");
 	

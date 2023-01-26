@@ -11,12 +11,12 @@
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.log("User is already being created or authenticated"), wait: true});
         return gun;
       }
       cat.ing = true;
       
-      var act = {}, u;
+      var act = {}, u, tries = 9;
       act.a = function(data){
         if(!data){ return act.b() }
         if(!data.pub){
@@ -29,7 +29,11 @@
       act.b = function(list){
         var get = (act.list = (act.list||[]).concat(list||[])).shift();
         if(u === get){
-          if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
+          if(act.name){ return act.err('Your user account is not published for apps to access') }
+          if(alias && tries--){
+            root.get('~@'+alias).once(act.a);
+            return;
+          }
           return act.err('Wrong user or password.') 
         }
         root.get(get).once(act.a);
@@ -74,7 +78,7 @@
         if(SEA.window && ((gun.back('user')._).opt||opt).remember){
           // TODO: this needs to be modular.
           try{var sS = {};
-          sS = window.sessionStorage; // TODO: FIX BUG putting on `.is`!
+          sS = SEA.window.sessionStorage; // TODO: FIX BUG putting on `.is`!
           sS.recall = true;
           sS.pair = JSON.stringify(pair); // auth using pair is more reliable than alias/pass
           }catch(e){}
@@ -112,7 +116,6 @@
       }
       act.w = function(auth){
         if(opt.shuffle){ // delete in future!
-          console.log('migrate core account from UTF8 & shuffle');
           var tmp = {}; Object.keys(act.data).forEach(function(k){ tmp[k] = act.data[k] });
           delete tmp._;
           tmp.auth = auth;
@@ -121,7 +124,7 @@
         root.get('~'+act.pair.pub).get('auth').put(auth, cb || noop);
       }
       act.err = function(e){
-        var ack = {err: Gun.log(e || 'User cannot be found!')};
+        var ack = {err: Gun.log(e || 'User cannot be found')};
         cat.ing = false;
         (cb || noop)(ack);
       }

@@ -11,6 +11,7 @@ function Dup(opt){
 		var it = s[id] || (s[id] = {});
 		it.was = dup.now = +new Date;
 		if(!dup.to){ dup.to = setTimeout(dup.drop, opt.age + 9) }
+		if(dt.ed){ dt.ed(id) }
 		return it;
 	}
 	dup.drop = function(age){

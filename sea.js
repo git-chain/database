@@ -38,7 +38,6 @@
       && location.host.indexOf('localhost') < 0
       && ! /^127\.\d+\.\d+\.\d+$/.test(location.hostname)
       && location.protocol.indexOf('file:') < 0){
-        console.warn('HTTPS needed for WebCrypto in SEA, redirecting...');
         location.protocol = 'https:'; // WebCrypto does NOT work without HTTPS!
       }
     } }catch(e){}
@@ -48,7 +47,7 @@
     var u;
     if(u+''== typeof btoa){
       if(u+'' == typeof Buffer){
-        try{ global.Buffer = USE("buffer", 1).Buffer }catch(e){ console.log("Please `npm install buffer` or add it to your package.json !") }
+        try{ global.Buffer = USE("buffer", 1).Buffer }catch{ }
       }
       global.btoa = function(data){ return Buffer.from(data, "binary").toString("base64") };
       global.atob = function(data){ return Buffer.from(data, "base64").toString("binary") };
@@ -90,7 +89,6 @@
     // https://github.com/feross/safe-buffer#update
     var SeaArray = USE('./array');
     function SafeBuffer(...props) {
-      console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
       return SafeBuffer.from(...props)
     }
     SafeBuffer.prototype = Object.create(Array.prototype)
@@ -202,8 +200,7 @@
       const { Crypto: WebCrypto } = USE('@peculiar/webcrypto', 1);
       api.ossl = api.subtle = new WebCrypto({directory: 'ossl'}).subtle // ECDH
     }
-    catch(e){
-      console.log("Please `npm install @peculiar/webcrypto` or add it to your package.json !");
+    catch{
     }}
 
     module.exports = api
@@ -683,7 +680,6 @@
       "cb": A callback function after all things are done.
       "opt": If opt.expiry (a timestamp) is set, SEA won't sync data after opt.expiry. If opt.block is set, SEA will look for block before syncing.
       */
-      console.log('SEA.certify() is an early experimental community supported method that may change API behavior without warning in any future version.')
 
       certificants = (() => {
         var data = []
@@ -871,14 +867,14 @@
       if(false !== opt.check){
         var err;
         if(!alias){ err = "No user." }
-        if((pass||'').length < 8){ err = "Password too short!" }
+        if((pass||'').length < 8){ err = "Password too short" }
         if(err){
           cb({err: Gun.log(err)});
           return gun;
         }
       }
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.log("User is already being created or authenticated"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -887,7 +883,7 @@
         act.pubs = pubs;
         if(pubs && !opt.already){
           // If we can enforce that a user name is already taken, it might be nice to try, but this is not guaranteed.
-          var ack = {err: Gun.log('User already created!')};
+          var ack = {err: Gun.log('User already created')};
           cat.ing = false;
           (cb || noop)(ack);
           gun.leave();
@@ -972,7 +968,7 @@
       var gun = this, cat = (gun._), root = gun.back(-1);
       
       if(cat.ing){
-        (cb || noop)({err: Gun.log("User is already being created or authenticated!"), wait: true});
+        (cb || noop)({err: Gun.log("User is already being created or authenticated"), wait: true});
         return gun;
       }
       cat.ing = true;
@@ -990,7 +986,7 @@
       act.b = function(list){
         var get = (act.list = (act.list||[]).concat(list||[])).shift();
         if(u === get){
-          if(act.name){ return act.err('Your user account is not published for dApps to access, please consider syncing it online, or allowing local access by adding your device as a peer.') }
+          if(act.name){ return act.err('Your user account is not published for apps to access') }
           if(alias && tries--){
             root.get('~@'+alias).once(act.a);
             return;
@@ -1077,7 +1073,6 @@
       }
       act.w = function(auth){
         if(opt.shuffle){ // delete in future!
-          console.log('migrate core account from UTF8 & shuffle');
           var tmp = {}; Object.keys(act.data).forEach(function(k){ tmp[k] = act.data[k] });
           delete tmp._;
           tmp.auth = auth;
@@ -1086,7 +1081,7 @@
         root.get('~'+act.pair.pub).get('auth').put(auth, cb || noop);
       }
       act.err = function(e){
-        var ack = {err: Gun.log(e || 'User cannot be found!')};
+        var ack = {err: Gun.log(e || 'User cannot be found')};
         cat.ing = false;
         (cb || noop)(ack);
       }
@@ -1161,7 +1156,6 @@
     }
     // If authenticated user wants to delete his/her account, let's support it!
     User.prototype.delete = async function(alias, pass, cb){
-      console.log("user.delete() IS DEPRECATED AND WILL BE MOVED TO A MODULE!!!");
       var gun = this, root = gun.back(-1), user = gun.back('user');
       try {
         user.auth(alias, pass, function(ack){
@@ -1178,7 +1172,6 @@
       return gun;
     }
     User.prototype.alive = async function(){
-      console.log("user.alive() IS DEPRECATED!!!");
       const gunRoot = this.back(-1)
       try {
         // All is good. Should we do something more with actual recalled data?
@@ -1191,7 +1184,6 @@
       }
     }
     User.prototype.trust = async function(user){
-      console.log("`.trust` API MAY BE DELETED OR CHANGED OR RENAMED, DO NOT USE!");
       // TODO: BUG!!! SEA `node` read listener needs to be async, which means core needs to be async too.
       //gun.get('alice').get('age').trust(bob);
       if (Gun.is(user)) {
@@ -1208,7 +1200,6 @@
       // and return the result of that to...
     }
     User.prototype.grant = function(to, cb){
-      console.log("`.grant` API MAY BE DELETED OR CHANGED OR RENAMED, DO NOT USE!");
       var gun = this, user = gun.back(-1).user(), pair = user._.sea, path = '';
       gun.back(function(at){ if(at.is){ return } path += (at.get||'') });
       (async function(){
@@ -1229,7 +1220,6 @@
       return gun;
     }
     User.prototype.secret = function(data, cb){
-      console.log("`.secret` API MAY BE DELETED OR CHANGED OR RENAMED, DO NOT USE!");
       var gun = this, user = gun.back(-1).user(), pair = user.pair(), path = '';
       gun.back(function(at){ if(at.is){ return } path += (at.get||'') });
       (async function(){
@@ -1364,16 +1354,16 @@
         if(data && data === key.split('#').slice(-1)[0]){ return eve.to.next(msg) }
           else if (data && data === hexToBase64(key.split('#').slice(-1)[0])){ 
           return eve.to.next(msg) }
-        no("Data hash not same as hash!");
+        no("Data hash not same as hash");
       }, {name: 'SHA-256'});
     }
     check.alias = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@, ~@alice: {#~@alice}}
-      if(!val){ return no("Data must exist!") } // data MUST exist
+      if(!val){ return no("Data must exist") } // data MUST exist
       if('~@'+key === link_is(val)){ return eve.to.next(msg) } // in fact, it must be EXACTLY equal to itself
       no("Alias not same!"); // if it isn't, reject.
     };
     check.pubs = function(eve, msg, val, key, soul, at, no){ // Example: {_:#~@alice, ~asdf: {#~asdf}}
-      if(!val){ return no("Alias must exist!") } // data MUST exist
+      if(!val){ return no("Alias must exist") } // data MUST exist
       if(key === link_is(val)){ return eve.to.next(msg) } // and the ID must be EXACTLY equal to its property
       no("Alias not same!"); // that way nobody can tamper with the list of public keys.
     };

@@ -436,7 +436,7 @@
 			var ERR = "Error: Invalid graph!";
 			var cut = function(s){ return " '"+(''+s).slice(0,9)+"...' " }
 			var L = JSON.stringify, MD = 2147483647, State = Gun.state;
-			var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: You're syncing 1K+ records a second, faster than DOM can update - consider limiting query.");CF=function(){C=0}}};
+			var C = 0, CT, CF = function(){if(C>999 && (C/-(CT - (CT = +new Date))>1)){Gun.window && console.log("Warning: currently syncing more than 1K records");CF=function(){C=0}}};
 
 		}());
 
@@ -548,9 +548,6 @@
 		
 		(Gun.window||{}).console = (Gun.window||{}).console || {log: function(){}};
 		(C = console).only = function(i, s){ return (C.only.i && i === C.only.i && C.only.i++) && (C.log.apply(C, arguments) || s) };
-
-		;"Please do not remove welcome log unless you are paying for a monthly sponsorship, thanks!";
-		Gun.log.once("welcome", "Hello wonderful person! :) Thanks for using GUN, please ask for help on http://chat.gun.eco if anything takes you longer than 5min to figure out!");
 	})(USE, './root');
 
 	;USE(function(module){
@@ -943,7 +940,7 @@
 				gun = tmp(this, key);
 			}
 			if(!gun){
-				(gun = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
+				(gun = this.chain())._.err = {err: Gun.log('Invalid get request', key)}; // CLEAN UP
 				if(cb){ cb.call(gun, gun._.err) }
 				return gun;
 			}
@@ -1254,7 +1251,6 @@
 			return gun;
 		}
 		function none(gun,opt,chain){
-			Gun.log.once("valonce", "Chainable val is experimental, its behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			(chain = gun.chain())._.nix = gun.once(function(data, key){ chain._.on('in', this._) });
 			chain._.lex = gun._.lex; // TODO: Better approach in future? This is quick for now.
 			return chain;
@@ -1329,7 +1325,6 @@
 				gun.on('in', map, chain._);
 				return chain;
 			}
-			Gun.log.once("mapfn", "Map functions are experimental, their behavior and API may change moving forward. Please play with it and report bugs and ideas on how to improve it.");
 			chain = gun.chain();
 			gun.map().on(function(data, key, msg, eve){
 				var next = (cb||noop).call(this, data, key, msg, eve);
@@ -1366,7 +1361,7 @@
 			}
 			gun.put(function(go){
 				item.get(function(soul, o, msg){ // TODO: BUG! We no longer have this option? & go error not handled?
-					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked! Not "' + msg.put + '"!')}) }
+					if(!soul){ return cb.call(gun, {err: Gun.log('Only a node can be linked. Not "' + msg.put + '"!')}) }
 					(tmp = {})[soul] = {'#': soul}; go(tmp);
 				},true);
 			})
@@ -1380,7 +1375,7 @@
 		var noop = function(){}
 		var parse = JSON.parseAsync || function(t,cb,r){ var u, d = +new Date; try{ cb(u, JSON.parse(t,r), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
 		var json = JSON.stringifyAsync || function(v,cb,r,s){ var u, d = +new Date; try{ cb(u, JSON.stringify(v,r,s), json.sucks(+new Date - d)) }catch(e){ cb(e) } }
-		json.sucks = function(d){ if(d > 99){ console.log("Warning: JSON blocking CPU detected. Add `gun/lib/yson.js` to fix."); json.sucks = noop } }
+		json.sucks = function(d){ if(d > 99){ console.log("Warning: JSON blocking CPU detected"); json.sucks = noop } }
 
 		function Mesh(root){
 			var mesh = function(){};
@@ -1398,7 +1393,7 @@
 
 			var hear = mesh.hear = function(raw, peer){
 				if(!raw){ return }
-				if(opt.max <= raw.length){ return mesh.say({dam: '!', err: "Message too big!"}, peer) }
+				if(opt.max <= raw.length){ return mesh.say({dam: '!', err: "Message too large"}, peer) }
 				if(mesh === this){
 					/*if('string' == typeof raw){ try{
 						var stat = console.STAT || {};
@@ -1708,7 +1703,7 @@
 				if(tmp = console.STAT){ tmp.peers = mesh.near }
 				if(opt.super){ return } // temporary (?) until we have better fix/solution?
 				var souls = Object.keys(root.next||''); // TODO: .keys( is slow
-				if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: You have more than 10K live GETs, which might use more bandwidth than your screen can show - consider `.off()`.") }
+				if(souls.length > 9999 && !console.SUBS){ console.log(console.SUBS = "Warning: more than 10K live GETs") }
 				setTimeout.each(souls, function(soul){ var node = root.next[soul];
 					if(opt.super || (node.ask||'')['']){ mesh.say({get: {'#': soul}}, peer); return }
 					setTimeout.each(Object.keys(node.ask||''), function(key){ if(!key){ return }
@@ -1794,7 +1789,6 @@
 		var noop = function(){}, store, u;
 		try{store = (Gun.window||noop).localStorage}catch(e){}
 		if(!store){
-			Gun.log("Warning: No localStorage exists to persist data to!");
 			store = {setItem: function(k,v){this[k]=v}, removeItem: function(k){delete this[k]}, getItem: function(k){return this[k]}};
 		}
 
@@ -1841,7 +1835,6 @@
 					try{!err && store.setItem(opt.prefix, tmp);
 					}catch(e){ err = stop = e || "localStorage failure" }
 					if(err){
-						Gun.log(err + " Consider using GUN's IndexedDB plugin for RAD for more storage space, https://gun.eco/docs/RAD#install");
 						root.on('localStorage:error', {err: err, get: opt.prefix, put: disk});
 					}
 					size = tmp.length;
@@ -1862,7 +1855,7 @@
 ;(function(){
 	var u;
 	if(''+u == typeof Gun){ return }
-	var DEP = function(n){ console.warn("Warning! Deprecated internal utility will break in next version:", n) }
+	var DEP = function(n){ console.warn("Warning! Deprecated internal utility") }
 	// Generic javascript utilities.
 	var Type = Gun;
 	//Type.fns = Type.fn = {is: function(fn){ return (!!fn && fn instanceof Function) }}

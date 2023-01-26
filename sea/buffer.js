@@ -7,7 +7,6 @@
     // https://github.com/feross/safe-buffer#update
     var SeaArray = require('./array');
     function SafeBuffer(...props) {
-      console.warn('new SafeBuffer() is depreciated, please use SafeBuffer.from()')
       return SafeBuffer.from(...props)
     }
     SafeBuffer.prototype = Object.create(Array.prototype)

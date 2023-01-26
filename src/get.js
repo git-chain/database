@@ -95,7 +95,7 @@ Gun.chain.get = function(key, cb, as){
 		gun = tmp(this, key);
 	}
 	if(!gun){
-		(gun = this.chain())._.err = {err: Gun.log('Invalid get request!', key)}; // CLEAN UP
+		(gun = this.chain())._.err = {err: Gun.log('Invalid get request', key)}; // CLEAN UP
 		if(cb){ cb.call(gun, gun._.err) }
 		return gun;
 	}
@@ -110,6 +110,7 @@ function cache(key, back){
 	next[at.get = key] = at;
 	if(back === cat.root.$){
 		at.soul = key;
+		//at.put = {};
 	} else
 	if(cat.soul || cat.has){
 		at.has = key;
